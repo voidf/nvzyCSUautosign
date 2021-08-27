@@ -78,6 +78,7 @@ async def agetold(ses: aiohttp.ClientSession, usr: str, pwd: str):
 #     slpt = 86400 - slpt + signtime
 #     print(f'阻塞{slpt}秒')
 #     time.sleep(max(1,slpt))
+import random
 
 @logger.catch
 async def asleep_until_sign(signtime):
@@ -95,7 +96,7 @@ async def asign_one(usr: str, pwd: str):
             try:
                 # sign_res = sign_in(get_old_info())
                 sign_res = await asign_in(ses, await agetold(ses, usr, pwd), usr, pwd)
-                if sign_res[0] == "{":
+                if sign_res and sign_res[0] == "{":
                     logger.debug(sign_res)
                     sign_res = json.loads(sign_res)
                     if sign_res["e"] == 0:
@@ -114,11 +115,12 @@ async def asign_one(usr: str, pwd: str):
                     # auth_session()
                     await aauth_session(ses, usr, pwd)
                 # time.sleep(5)
-                await asyncio.sleep(30)
+                await asyncio.sleep(random.randint(20,40))
             except:
-                traceback.print_exc()
+                # traceback.print_exc(random.randint(20,40))
                 # time.sleep(5)
-                await asyncio.sleep(30)
+                logger.error(traceback.format_exc())
+                await asyncio.sleep(random.randint(20,40))
             
             logger.critical(f"[{usr}]程序退出")
 
