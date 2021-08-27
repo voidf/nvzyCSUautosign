@@ -65,42 +65,42 @@ def generate_auth(pw: str, key: str):
     pr = prpcrypt(key)
     return pr.encrypt(word, iv)
 
-@logger.catch
-def get_aes_salt(ses: session):
-    # headers = {
-    #     "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-    #     "Accept-Encoding":"gzip, deflate, br",
-    #     "Accept-Language":"zh-CN,zh;q=0.9",
-    #     "Cache-Control":"no-cache",
-    #     "Connection":"keep-alive",
-    #     "DNT":"1",
-    #     "Host":"ca.csu.edu.cn",
-    #     "Pragma":"no-cache",
-    #     "Sec-Fetch-Dest":"document",
-    #     "Sec-Fetch-Mode":"navigate",
-    #     "Sec-Fetch-Site":"none",
-    #     "Sec-Fetch-User":"?1",
-    #     "Upgrade-Insecure-Requests":"1",
-    #     "User-Agent":"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"
-    # }
-    req = ses.get('https://ca.csu.edu.cn/authserver/login?service=https%3A%2F%2Fwxxy.csu.edu.cn%2Fa_csu%2Fapi%2Fcas%2Findex%3Fredirect%3Dhttps%253A%252F%252Fwxxy.csu.edu.cn%252Fncov%252Fwap%252Fdefault%252Findex%253Ffrom%253Dhistory%26from%3Dwap')
+# @logger.catch
+# def get_aes_salt(ses: session):
+#     # headers = {
+#     #     "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+#     #     "Accept-Encoding":"gzip, deflate, br",
+#     #     "Accept-Language":"zh-CN,zh;q=0.9",
+#     #     "Cache-Control":"no-cache",
+#     #     "Connection":"keep-alive",
+#     #     "DNT":"1",
+#     #     "Host":"ca.csu.edu.cn",
+#     #     "Pragma":"no-cache",
+#     #     "Sec-Fetch-Dest":"document",
+#     #     "Sec-Fetch-Mode":"navigate",
+#     #     "Sec-Fetch-Site":"none",
+#     #     "Sec-Fetch-User":"?1",
+#     #     "Upgrade-Insecure-Requests":"1",
+#     #     "User-Agent":"Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36"
+#     # }
+#     req = ses.get('https://ca.csu.edu.cn/authserver/login?service=https%3A%2F%2Fwxxy.csu.edu.cn%2Fa_csu%2Fapi%2Fcas%2Findex%3Fredirect%3Dhttps%253A%252F%252Fwxxy.csu.edu.cn%252Fncov%252Fwap%252Fdefault%252Findex%253Ffrom%253Dhistory%26from%3Dwap')
 
-    B = BeautifulSoup(req.text, "html.parser")
-    saltobj = B.find('input', attrs={'id': 'pwdEncryptSalt'})
-    exeobj = B.find('input', attrs={'id': 'execution'})
+#     B = BeautifulSoup(req.text, "html.parser")
+#     saltobj = B.find('input', attrs={'id': 'pwdEncryptSalt'})
+#     exeobj = B.find('input', attrs={'id': 'execution'})
 
-    global saltStorage, exeStorage
-    if saltobj:
-        saltStorage = saltobj
-    else:
-        saltobj = saltStorage
-    if exeobj:
-        exeStorage = exeobj
-    else:
-        exeobj = exeStorage
-    # print(saltobj['value'])
-    # print(exeobj['value'])
-    return saltobj['value'], exeobj['value']
+#     global saltStorage, exeStorage
+#     if saltobj:
+#         saltStorage = saltobj
+#     else:
+#         saltobj = saltStorage
+#     if exeobj:
+#         exeStorage = exeobj
+#     else:
+#         exeobj = exeStorage
+#     # print(saltobj['value'])
+#     # print(exeobj['value'])
+#     return saltobj['value'], exeobj['value']
 
 @logger.catch
 async def aget_aes_salt(ses: aiohttp.ClientSession):
@@ -122,25 +122,25 @@ async def aget_aes_salt(ses: aiohttp.ClientSession):
         exeobj = exeStorage
     return saltobj['value'], exeobj['value']
 
-@logger.catch
-def r2(ses: session, user: str, pw: str):
-    salt, exe = get_aes_salt(ses)
-    form = {
-        "username": user,
-        "password": generate_auth(pw, salt),
-        "captcha": None,
-        # "rememberMe":True,
-        "_eventId": "submit",
-        "cllt": "userNameLogin",
-        "dllt": "generalLogin",
-        "lt": None,
-        "execution": exe
-    }
-    lnk = 'https://ca.csu.edu.cn/authserver/login?service=https%3A%2F%2Fwxxy.csu.edu.cn%2Fa_csu%2Fapi%2Fcas%2Findex%3Fredirect%3Dhttps%253A%252F%252Fwxxy.csu.edu.cn%252Fncov%252Fwap%252Fdefault%252Findex%253Ffrom%253Dhistory%26from%3Dwap'
-    # https://ca.csu.edu.cn/authserver/login?service=https%3A%2F%2Fwxxy.csu.edu.cn%2Fa_csu%2Fapi%2Fcas%2Findex%3Fredirect%3Dhttps%253A%252F%252Fwxxy.csu.edu.cn%252Fncov%252Fwap%252Fdefault%252Findex%253Ffrom%253Dhistory%26from%3Dwap
-    req = ses.post(lnk, data=form)
-    print(req.history)
-    print(req)
+# @logger.catch
+# def r2(ses: session, user: str, pw: str):
+#     salt, exe = get_aes_salt(ses)
+#     form = {
+#         "username": user,
+#         "password": generate_auth(pw, salt),
+#         "captcha": None,
+#         # "rememberMe":True,
+#         "_eventId": "submit",
+#         "cllt": "userNameLogin",
+#         "dllt": "generalLogin",
+#         "lt": None,
+#         "execution": exe
+#     }
+#     lnk = 'https://ca.csu.edu.cn/authserver/login?service=https%3A%2F%2Fwxxy.csu.edu.cn%2Fa_csu%2Fapi%2Fcas%2Findex%3Fredirect%3Dhttps%253A%252F%252Fwxxy.csu.edu.cn%252Fncov%252Fwap%252Fdefault%252Findex%253Ffrom%253Dhistory%26from%3Dwap'
+#     # https://ca.csu.edu.cn/authserver/login?service=https%3A%2F%2Fwxxy.csu.edu.cn%2Fa_csu%2Fapi%2Fcas%2Findex%3Fredirect%3Dhttps%253A%252F%252Fwxxy.csu.edu.cn%252Fncov%252Fwap%252Fdefault%252Findex%253Ffrom%253Dhistory%26from%3Dwap
+#     req = ses.post(lnk, data=form)
+#     print(req.history)
+#     print(req)
     # logger.warning(req.text)
 
 @logger.catch
@@ -163,7 +163,7 @@ async def ar2(ses: aiohttp.ClientSession, user: str, pw: str):
         data=form
     ) as resp:
         req = await resp.text()
-        print(req)
+        # logger.debug(req)
 
     # req = ses.post(lnk, data=form)
     # print(req.history)
