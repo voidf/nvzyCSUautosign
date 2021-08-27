@@ -179,7 +179,7 @@ async def asign_in(ses: aiohttp.ClientSession, je, usr: str, pwd: str):
         jgeo['addressComponent']['district'],
     ])
     async with ses.post(
-        url, data=je, timeout=5
+        url, data=je, timeout=60
     ) as resp:
         return await resp.text()
 
@@ -203,3 +203,4 @@ if __name__ == "__main__":
     asyncio.run(main())
 
 
+# https://ca.csu.edu.cn/authserver/getCaptcha.htl?1630081044006

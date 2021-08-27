@@ -104,7 +104,9 @@ def generate_auth(pw: str, key: str):
 
 @logger.catch
 async def aget_aes_salt(ses: aiohttp.ClientSession):
-    async with ses.get('https://ca.csu.edu.cn/authserver/login?service=https%3A%2F%2Fwxxy.csu.edu.cn%2Fa_csu%2Fapi%2Fcas%2Findex%3Fredirect%3Dhttps%253A%252F%252Fwxxy.csu.edu.cn%252Fncov%252Fwap%252Fdefault%252Findex%253Ffrom%253Dhistory%26from%3Dwap') as resp:
+    async with ses.get(
+        'https://ca.csu.edu.cn/authserver/login?service=https%3A%2F%2Fwxxy.csu.edu.cn%2Fa_csu%2Fapi%2Fcas%2Findex%3Fredirect%3Dhttps%253A%252F%252Fwxxy.csu.edu.cn%252Fncov%252Fwap%252Fdefault%252Findex%253Ffrom%253Dhistory%26from%3Dwap'
+    ) as resp:
         req = await resp.text()
     # req = ses.get()
     B = BeautifulSoup(req, "html.parser")
@@ -143,10 +145,12 @@ async def aget_aes_salt(ses: aiohttp.ClientSession):
 #     print(req)
     # logger.warning(req.text)
 
+# https://ca.csu.edu.cn/authserver/checkNeedCaptcha.htl?username={usr}&_={ts}
+
 @logger.catch
 async def ar2(ses: aiohttp.ClientSession, user: str, pw: str):
     salt, exe = await aget_aes_salt(ses)
-    form = {
+    form = { # TODO: 写验证码
         "username": user,
         "password": generate_auth(pw, salt),
         "captcha": None,
