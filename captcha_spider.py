@@ -54,7 +54,7 @@ async def fliter_and_cut(pic: JpegImageFile) -> List[JpegImageFile]:
 
                     if sq < same_th:
                         same_color += 1
-            print(same_color, tot, same_color*2 < tot, p, q)
+            # print(same_color, tot, same_color*2 < tot, p, q)
             if same_color*2 < tot:
                 matrix[p][q] = blank_color
     m2 = matrix.copy()
@@ -105,48 +105,87 @@ async def fliter_and_cut(pic: JpegImageFile) -> List[JpegImageFile]:
     # print(matrix)
 
     # pic.
-
 import string, os
-async def main():
+
+def train(pic: JpegImageFile):
+    pic.show()
+    cmd = input('像哪个？>>>')
+    if len(cmd)>1:
+        return
+    if cmd in string.ascii_uppercase:
+        with open('data/{}_/{:0>2d}.png'.format(cmd, 1+len(os.listdir(f'data/{cmd}_/'))), 'wb') as f:
+            pic.save(f)
+    else:
+        with open('data/{}/{:0>2d}.png'.format(cmd, 1+len(os.listdir(f'data/{cmd}/'))), 'wb') as f:
+            pic.save(f)
+
+ml_data = {}
+
+def reload():
+    for directory in os.listdir('data/'):
+        if os.path.isdir('data/' + directory):
+            data_class = directory[0]
+            for fn in os.listdir('data/' + directory):
+                # with open('data/' + directory + '/' + fn) as f:
+                ml_data.setdefault(data_class, []).append(np.array(Image.open('data/' + directory + '/' + fn)))
+
+def predict(pic: Union[np.array, JpegImageFile, Image.Image]):
+    if isinstance(pic, (JpegImageFile, Image.Image)):
+        pic = np.array(pic)
+    if not ml_data:
+        reload()
+    rate = []
+    for k, v in ml_data.items():
+        for mat in v:
+            hamming = max(pic.shape[0], mat.shape[0]) * max(pic.shape[1], mat.shape[1])
+            for p in range(min(pic.shape[0], mat.shape[0])):
+                for q in range(min(pic.shape[1], mat.shape[1])):
+                    if pic[p][q] == mat[p][q]:
+                        hamming -= 1
+            rate.append((hamming, k))
+    rate.sort()
+    d = {}
+    for p, i in enumerate(rate[:4]):
+        rated, key = i
+        d[key] = d.get(key, 0) + 100 - p
+    logger.debug(d.items())
+    return sorted(d.items(), key=lambda x: x[1], reverse=True)[0][0]
+
+
+
+
+async def get_captcha(ses: aiohttp.ClientSession):
     # for i in string.ascii_lowercase + string.ascii_uppercase + string.digits:
     for i in string.ascii_uppercase:
         if not os.path.exists('data/'+i+'_/'):
             os.mkdir('data/'+i+'_/')
     
-    async with aiohttp.ClientSession() as ses:
+    # async with aiohttp.ClientSession() as ses:
         # resp: 
-        for i in range(10):
-            resp: aiohttp.ClientResponse
-            async with ses.get(f'https://ca.csu.edu.cn/authserver/getCaptcha.htl?{int(datetime.datetime.now().timestamp()*1e3)}') as resp:
-                b = await resp.content.read()
+        # for i in range(10):
+    resp: aiohttp.ClientResponse
+    async with ses.get(f'https://ca.csu.edu.cn/authserver/getCaptcha.htl?{int(datetime.datetime.now().timestamp()*1e3)}') as resp:
+        b = await resp.content.read()
 
-                # f:aiofiles.tempfile.
-                f: aiofiles.threadpool.binary.AsyncBufferedIOBase
-                with open('data/ori.png', 'wb') as f:
-                    f.write(b)
-                pic: JpegImageFile = Image.open(BytesIO(b))
-                pics = await fliter_and_cut(pic)
-                j: JpegImageFile
-                for p, j in enumerate(pics):
-                    j.show()
-                    cmd = input('像哪个？>>>')
-                    if len(cmd)>1:
-                        continue
-                    if cmd in string.ascii_uppercase:
-                        with open('data/{}_/{:0>2d}.png'.format(cmd, 1+len(os.listdir(f'data/{cmd}_/'))), 'wb') as f:
-                            j.save(f)
-                    else:
-                        with open('data/{}/{:0>2d}.png'.format(cmd, 1+len(os.listdir(f'data/{cmd}/'))), 'wb') as f:
-                            j.save(f)
+        # f:aiofiles.tempfile.
+        f: aiofiles.threadpool.binary.AsyncBufferedIOBase
+        with open('data/ori.png', 'wb') as f:
+            f.write(b)
+        pic: JpegImageFile = Image.open(BytesIO(b))
+        pics = await fliter_and_cut(pic)
+        j: JpegImageFile
+        res = []
+        for p, j in enumerate(pics):
+            # train(j)
+            # res = predict(j)
+            # print(res)
+            res.append(predict(j))
+        res = ''.join(res)
+        logger.debug('predict result: {}', res)
+        return res
 
-
-                    # with open(f'data/R_{i}_{p}.png', 'wb') as f:
-                        # print(type(f))
-                        # j.save(f)
-                        # await f.write(j.tobytes())
-                # print(b)
-
+                    
 import asyncio
 
-if __name__ == '__main__':
-    asyncio.run(main())
+# if __name__ == '__main__':
+#     asyncio.run(get_captcha())

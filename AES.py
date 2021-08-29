@@ -147,13 +147,23 @@ async def aget_aes_salt(ses: aiohttp.ClientSession):
 
 # https://ca.csu.edu.cn/authserver/checkNeedCaptcha.htl?username={usr}&_={ts}
 
+import datetime
+from captcha_spider import get_captcha
+
 @logger.catch
-async def ar2(ses: aiohttp.ClientSession, user: str, pw: str):
+async def ar2(ses: aiohttp.ClientSession, usr: str, pwd: str):
     salt, exe = await aget_aes_salt(ses)
+    ts = int(datetime.datetime.now().timestamp() * 1000)
+    resp: aiohttp.ClientResponse
+    async with ses.get(f'https://ca.csu.edu.cn/authserver/checkNeedCaptcha.htl?username={usr}&_={ts}') as resp:
+        res = await resp.text()
+    captcha = None
+    if 'false' not in res:
+        captcha = get_captcha(ses)
     form = { # TODO: 写验证码
-        "username": user,
-        "password": generate_auth(pw, salt),
-        "captcha": None,
+        "username": usr,
+        "password": generate_auth(pwd, salt),
+        "captcha": captcha,
         "rememberMe": True,
         "_eventId": "submit",
         "cllt": "userNameLogin",

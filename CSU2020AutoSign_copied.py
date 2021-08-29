@@ -16,6 +16,7 @@ import traceback
 import requests.packages.urllib3.util.ssl_
 from AES import ar2
 from loguru import logger
+
 # requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS = 'ALL'
 
 class MyAdapter(HTTPAdapter):
@@ -166,18 +167,25 @@ async def main():
 async def asign_in(ses: aiohttp.ClientSession, je, usr: str, pwd: str):
     await aauth_session(ses, usr, pwd)
     url = "https://wxxy.csu.edu.cn/ncov/wap/default/save"
-    je["id"] = int(je["id"])
-    je["date"] = str_time("%Y%m%d")
-    je["created"] = unix_time()
-    jgeo = json.loads(je["geo_api_info"])
-    je["address"] = jgeo['formattedAddress']
-    je["city"] = jgeo['addressComponent']['city']
-    je["province"] = jgeo['addressComponent']['province']
-    je["area"] = ' '.join([
-        jgeo['addressComponent']['province'],
-        jgeo['addressComponent']['city'],
-        jgeo['addressComponent']['district'],
-    ])
+    try:
+        je["id"] = int(je["id"])
+        je["date"] = str_time("%Y%m%d")
+        je["created"] = unix_time()
+        jgeo = json.loads(je["geo_api_info"])
+        je["address"] = jgeo['formattedAddress']
+        je["city"] = jgeo['addressComponent']['city']
+        je["province"] = jgeo['addressComponent']['province']
+        je["area"] = ' '.join([
+            jgeo['addressComponent']['province'],
+            jgeo['addressComponent']['city'],
+            jgeo['addressComponent']['district'],
+        ])
+        with open(f'{usr}_bak.json', 'w') as f:
+            json.dump(je, f)
+    except:
+        logger.error(traceback.format_exc())
+        with open(f'{usr}_bak.json', 'r') as f:
+            je = json.load(f)
     async with ses.post(
         url, data=je, timeout=60
     ) as resp:
