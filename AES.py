@@ -177,7 +177,9 @@ async def ar2(ses: aiohttp.ClientSession, usr: str, pwd: str):
         data=form
     ) as resp:
         req = await resp.text()
-        # logger.debug(req)
+        logger.debug(req[:400])
+        if 'Authentication attempt is blocked.' in req:
+            return f'[{usr}] Authentication attempt is blocked. (账号认证被阻止)'
 
     # req = ses.post(lnk, data=form)
     # print(req.history)
