@@ -1,4 +1,5 @@
 # coding=utf-8
+from inspect import trace
 import time
 import datetime
 import json
@@ -28,6 +29,7 @@ class MyAdapter(HTTPAdapter):
 
 
 import random
+import json5
 
 signtime = 500 # 在每天的第几秒签到
 
@@ -35,15 +37,21 @@ class AutoSign:
     # @logger.catch
 
     async def agetold(self, ses: aiohttp.ClientSession, usr: str, pwd: str):
-        await self.aauth_session(ses, usr, pwd)
-        lnk = 'https://wxxy.csu.edu.cn/ncov/wap/default/index?from=history'
-        async with ses.get(lnk) as resp:
-            sr = await resp.text()
-        rer = re.findall('''var def = ({.*})''',sr)
-        # logger.warning(rer)
-        # print(rer)
-        je = json.loads(rer[0])
-        return je
+        try:
+            await self.aauth_session(ses, usr, pwd)
+            lnk = 'https://wxxy.csu.edu.cn/ncov/wap/default/index?from=history'
+            async with ses.get(lnk) as resp:
+                sr = await resp.text()
+            # with open('dbg.htm', 'w', encoding='utf-8') as R:
+                # R.write(sr)
+            rer = re.findall('''var def = ({.*?});''',sr,re.DOTALL)
+            # logger.warning(rer)
+            # print(rer)
+            je = json5.loads(rer[0].replace('\r\n',''))
+            return je
+        except:
+            logger.error('爬历史信息出现问题：{}', traceback.format_exc())
+            return {}
 
 
     @logger.catch
