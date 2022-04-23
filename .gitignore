@@ -1,4 +1,5 @@
 __pycache__/
 http_config.py
 *.json
+*.log
 history/
