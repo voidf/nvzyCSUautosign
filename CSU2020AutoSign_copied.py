@@ -1,5 +1,6 @@
 # coding=utf-8
 from inspect import trace
+import os
 import time
 import datetime
 import json
@@ -17,6 +18,9 @@ import traceback
 import requests.packages.urllib3.util.ssl_
 from AES import ar2
 from loguru import logger
+import pickle
+
+logger.add("nszy_auto_sign.log", rotation="60 MB")
 
 # requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS = 'ALL'
 
@@ -37,6 +41,7 @@ class AutoSign:
     # @logger.catch
 
     async def agetold(self, ses: aiohttp.ClientSession, usr: str, pwd: str):
+        """从服务器端读上一次的请求保存的信息"""
         try:
             await self.aauth_session(ses, usr, pwd)
             lnk = 'https://wxxy.csu.edu.cn/ncov/wap/default/index?from=history'
@@ -56,6 +61,7 @@ class AutoSign:
 
     @logger.catch
     async def asleep_until_sign(self, signtime):
+        """等待直到下一次"""
         slpt = (datetime.datetime.now().timestamp() + 3600 * 8 ) % 86400
         slpt = 86400 - slpt + signtime
         logger.debug(f'等待{slpt}秒')
@@ -73,6 +79,7 @@ class AutoSign:
         self.alive = True
     
     async def asign_one(self):
+        """为一个人打上"""
         ses = self.ses
         usr = self.usr
         pwd = self.pwd
@@ -128,6 +135,10 @@ class AutoSign:
                 jgeo['addressComponent']['district'],
             ])
             with open(f'{usr}_bak.json', 'w') as f:
+                json.dump(je, f)
+            if not os.path.exists('history'):
+                os.mkdir('history')
+            with open(f'history/{usr}_{datetime.datetime.now().strftime("%Y-%m-%d")}.json', 'w') as f:
                 json.dump(je, f)
         except:
             logger.error(traceback.format_exc())
